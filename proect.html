@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Monitor - Курсы валют</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Навигация */
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 15px 30px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            max-width: 1400px;
+            margin: 0 auto 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-link {
+            color: #333;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .update-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        /* Основной контейнер */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Карточка курсов валют */
+        .currency-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-bottom: 30px;
+        }
+
+        /* Заголовок */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .card-header h2 {
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5em;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .refresh-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Основные курсы */
+        .main-rates {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .rate-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 25px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .rate-card::before {
+            content: '💰';
+            position: absolute;
+            right: 20px;
+            bottom: 20px;
+            font-size: 60px;
+            opacity: 0.2;
+        }
+
+        .rate-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .rate-code {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .rate-change {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .rate-change.positive {
+            background: rgba(40, 167, 69, 0.3);
+            color: #d4edda;
+        }
+
+        .rate-change.negative {
+            background: rgba(220, 53, 69, 0.3);
+            color: #f8d7da;
+        }
+
+        .rate-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .rate-name {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        /* Таблица валют */
+        .rates-table-section {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 20px;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .table-header h3 {
+            color: #333;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-box input {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            min-width: 250px;
+        }
+
+        .search-box input:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+            border-radius: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #333;
+        }
+
+        tr:hover {
+            background: #f5f5f5;
+        }
+
+        .currency-flag {
+            font-size: 1.3em;
+            margin-right: 8px;
+        }
+
+        /* Графики */
+        .charts-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .chart-controls select {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+            min-width: 200px;
+        }
+
+        .chart-container {
+            height: 400px;
+            position: relative;
+        }
+
+        /* Новости */
+        .news-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+        }
+
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .news-item {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            transition: all 0.3s;
+            border: 1px solid #e0e0e0;
+        }
+
+        .news-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-color: #667eea;
+        }
+
+        .news-date {
+            color: #667eea;
+            font-size: 0.85em;
+            margin-bottom: 10px;
+        }
+
+        .news-title {
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .news-summary {
+            color: #666;
+            font-size: 0.95em;
+            line-height: 1.5;
+        }
+
+        /* Калькулятор */
+        .calculator-section {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        .calc-input {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .calc-input label {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .calc-input input, .calc-input select {
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1em;
+        }
+
+        .calc-input input:focus, .calc-input select:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .calc-result {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 15px;
+            padding: 25px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .result-amount {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        /* Индикаторы */
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-online {
+            background: #28a745;
+            box-shadow: 0 0 10px #28a745;
+        }
+
+        .status-offline {
+            background: #dc3545;
+        }
+
+        /* Уведомления */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            background: #28a745;
+            color: white;
+            animation: slideIn 0.3s ease;
+            z-index: 1000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            max-width: 350px;
+        }
+
+        .notification.error {
+            background: #dc3545;
+        }
+
+        .notification.warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Загрузка */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Прогресс бар */
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #f0f0f0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .calculator-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-rates {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <!-- Chart.js для графиков -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Навигация -->
+    <div class="navbar">
+        <div class="logo">
+            💱 Currency Monitor
+        </div>
+        <div class="nav-links">
+            <a class="nav-link active" onclick="showSection('rates')">Курсы валют</a>
+            <a class="nav-link" onclick="showSection('charts')">Графики</a>
+            <a class="nav-link" onclick="showSection('news')">Новости</a>
+            <a class="nav-link" onclick="showSection('calculator')">Калькулятор</a>
+        </div>
+        <div class="update-info">
+            <span class="status-indicator status-online" id="apiStatus"></span>
+            <span id="lastUpdate">Обновление...</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Секция курсов валют -->
+        <div id="ratesSection">
+            <div class="currency-card">
+                <div class="card-header">
+                    <h2>
+                        <span>📊</span> Текущие курсы валют к RUB
+                    </h2>
+                    <button class="refresh-btn" onclick="fetchAllData()" id="refreshBtn">
+                        <span>🔄</span> Обновить данные
+                    </button>
+                </div>
+
+                <!-- Основные валюты -->
+                <div class="main-rates" id="mainRates">
+                    <div class="rate-card">
+                        <div class="rate-header">
+                            <span class="rate-code">USD</span>
+                            <span class="rate-change positive" id="usdChange">+0.15%</span>
+                        </div>
+                        <div class="rate-value" id="usdRate">92.45</div>
+                        <div class="rate-name">Доллар США</div>
+                    </div>
+                    <div class="rate-card">
+                        <div class="rate-header">
+                            <span class="rate-code">EUR</span>
+                            <span class="rate-change negative" id="eurChange">-0.23%</span>
+                        </div>
+                        <div class="rate-value" id="eurRate">99.12</div>
+                        <div class="rate-name">Евро</div>
+                    </div>
+                    <div class="rate-card">
+                        <div class="rate-header">
+                            <span class="rate-code">CNY</span>
+                            <span class="rate-change positive" id="cnyChange">+0.08%</span>
+                        </div>
+                        <div class="rate-value" id="cnyRate">12.78</div>
+                        <div class="rate-name">Китайский юань</div>
+                    </div>
+                </div>
+
+                <!-- Таблица всех валют -->
+                <div class="rates-table-section">
+                    <div class="table-header">
+                        <h3>📋 Все валюты</h3>
+                        <div class="search-box">
+                            <input type="text" id="currencySearch" placeholder="🔍 Поиск валюты..." onkeyup="filterCurrencies()">
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="currencyTable">
+                            <thead>
+                                <tr>
+                                    <th>Валюта</th>
+                                    <th>Код</th>
+                                    <th>Курс к RUB</th>
+                                    <th>Изменение (24ч)</th>
+                                    <th>Мин (24ч)</th>
+                                    <th>Макс (24ч)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="currencyTableBody">
+                                <!-- Данные будут загружаться сюда -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Прогресс загрузки -->
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Секция графиков -->
+        <div id="chartsSection" style="display: none;">
+            <div class="charts-section">
+                <div class="chart-controls">
+                    <select id="chartCurrency" onchange="updateChart()">
+                        <option value="USD">USD - Доллар США</option>
+                        <option value="EUR">EUR - Евро</option>
+                        <option value="CNY">CNY - Китайский юань</option>
+                        <option value="GBP">GBP - Фунт стерлингов</option>
+                        <option value="JPY">JPY - Японская иена</option>
+                    </select>
+                    <select id="chartPeriod" onchange="updateChart()">
+                        <option value="7">7 дней</option>
+                        <option value="14">14 дней</option>
+                        <option value="30">30 дней</option>
+                        <option value="90">3 месяца</option>
+                    </select>
+                </div>
+                <div class="chart-container">
+                    <canvas id="currencyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Секция новостей -->
+        <div id="newsSection" style="display: none;">
+            <div class="news-section">
+                <h2 style="margin-bottom: 20px;">📰 Финансовые новости</h2>
+                <div class="news-grid" id="newsGrid">
+                    <!-- Новости будут загружаться сюда -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Секция калькулятора -->
+        <div id="calculatorSection" style="display: none;">
+            <div class="calculator-section">
+                <h2>🧮 Конвертер валют</h2>
+                <div class="calculator-grid">
+                    <div class="calc-input">
+                        <label>Сумма:</label>
+                        <input type="number" id="amount" value="100" oninput="convertCurrency()">
+                        
+                        <label>Из валюты:</label>
+                        <select id="fromCurrency" onchange="convertCurrency()">
+                            <option value="USD">USD - Доллар США</option>
+                            <option value="EUR">EUR - Евро</option>
+                            <option value="CNY">CNY - Китайский юань</option>
+                            <option value="GBP">GBP - Фунт стерлингов</option>
+                            <option value="JPY">JPY - Японская иена</option>
+                        </select>
+                        
+                        <label>В валюту:</label>
+                        <select id="toCurrency" onchange="convertCurrency()">
+                            <option value="RUB" selected>RUB - Российский рубль</option>
+                            <option value="USD">USD - Доллар США</option>
+                            <option value="EUR">EUR - Евро</option>
+                        </select>
+                    </div>
+                    <div class="calc-result">
+                        <div>Результат:</div>
+                        <div class="result-amount" id="resultAmount">9,245.00 RUB</div>
+                        <div id="conversionRate">1 USD = 92.45 RUB</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Состояние приложения
+        let currencyData = {
+            rates: {},
+            lastUpdate: null,
+            history: {}
+        };
+        
+        let chart = null;
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchAllData();
+            startAutoUpdate();
+        });
+
+        // Показ секции
+        function showSection(section) {
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('ratesSection').style.display = 'none';
+            document.getElementById('chartsSection').style.display = 'none';
+            document.getElementById('newsSection').style.display = 'none';
+            document.getElementById('calculatorSection').style.display = 'none';
+            
+            document.getElementById(section + 'Section').style.display = 'block';
+            
+            if (section === 'charts') {
+                setTimeout(initChart, 100);
+            }
+        }
+
+        // Автообновление каждые 60 секунд
+        function startAutoUpdate() {
+            setInterval(fetchAllData, 60000);
+        }
+
+        // Загрузка всех данных
+        async function fetchAllData() {
+            const refreshBtn = document.getElementById('refreshBtn');
+            refreshBtn.disabled = true;
+            refreshBtn.innerHTML = '<span class="loading-spinner"></span> Обновление...';
+            
+            document.getElementById('progressFill').style.width = '25%';
+            
+            try {
+                // Загружаем курсы валют с внешнего API
+                await fetchExchangeRates();
+                document.getElementById('progressFill').style.width = '50%';
+                
+                // Загружаем исторические данные
+                await fetchHistoricalData();
+                document.getElementById('progressFill').style.width = '75%';
+                
+                // Загружаем новости
+                await fetchNews();
+                document.getElementById('progressFill').style.width = '100%';
+                
+                showNotification('Данные успешно обновлены');
+                
+                setTimeout(() => {
+                    document.getElementById('progressFill').style.width = '0%';
+                }, 500);
+                
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                showNotification('Ошибка загрузки данных', 'error');
+            } finally {
+                refreshBtn.disabled = false;
+                refreshBtn.innerHTML = '🔄 Обновить данные';
+            }
+        }
+
+        // Загрузка курсов валют (используем бесплатное API)
+        async function fetchExchangeRates() {
+            try {
+                // Используем бесплатное API exchangerate-api
+                const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                const data = await response.json();
+                
+                // Конвертируем в рубли
+                const usdToRub = 92.45; // Базовый курс (в реальном API нужно получать актуальный)
+                
+                const rates = {};
+                for (let [currency, rate] of Object.entries(data.rates)) {
+                    rates[currency] = rate * (usdToRub / data.rates.RUB);
+                }
+                
+                currencyData.rates = rates;
+                currencyData.lastUpdate = new Date();
+                
+                updateDisplay();
+                updateMainRates();
+                updateCurrencyTable();
+                
+                document.getElementById('lastUpdate').textContent = 
+                    `Последнее обновление: ${currencyData.lastUpdate.toLocaleTimeString()}`;
+                
+                document.getElementById('apiStatus').className = 'status-indicator status-online';
+                
+            } catch (error) {
+                console.error('Error fetching rates:', error);
+                // Используем демо-данные при ошибке
+                useDemoData();
+                document.getElementById('apiStatus').className = 'status-indicator status-offline';
+                showNotification('Используются демо-данные', 'warning');
+            }
+        }
+
+        // Демо-данные на случай ошибки API
+        function useDemoData() {
+            currencyData.rates = {
+                USD: 92.45,
+                EUR: 99.12,
+                CNY: 12.78,
+                GBP: 115.30,
+                JPY: 0.62,
+                CHF: 104.50,
+                CAD: 68.20,
+                AUD: 60.15,
+                RUB: 1
+            };
+            
+            updateDisplay();
+            updateMainRates();
+            updateCurrencyTable();
+        }
+
+        // Загрузка исторических данных
+        async function fetchHistoricalData() {
+            // В реальном приложении здесь был бы запрос к API
+            // Используем демо-данные
+            const currencies = ['USD', 'EUR', 'CNY', 'GBP', 'JPY'];
+            
+            currencies.forEach(currency => {
+                currencyData.history[currency] = [];
+                const baseRate = currencyData.rates[currency] || 90;
+                
+                for (let i = 30; i >= 0; i--) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    
+                    currencyData.history[currency].push({
+                        date: date.toISOString().split('T')[0],
+                        rate: baseRate + (Math.random() - 0.5) * 10
+                    });
+                }
+            });
+        }
+
+        // Загрузка новостей
+        async function fetchNews() {
+            const newsGrid = document.getElementById('newsGrid');
+            
+            const news = [
+                {
+                    date: '2024-01-15',
+                    title: 'Рубль укрепляется на фоне роста цен на нефть',
+                    summary: 'Курс российской валюты показывает уверенный рост благодаря повышению стоимости нефти марки Brent.'
+                },
+                {
+                    date: '2024-01-14',
+                    title: 'ЦБ сохранил ключевую ставку на уровне 16%',
+                    summary: 'Банк России принял решение сохранить ключевую ставку для стабилизации инфляционных ожиданий.'
+                },
+                {
+                    date: '2024-01-13',
+                    title: 'Евро достиг минимума за последние 2 месяца',
+                    summary: 'Европейская валюта продолжает снижаться на фоне слабой экономической статистики еврозоны.'
+                },
+                {
+                    date: '2024-01-12',
+                    title: 'Доллар дешевеет после публикации данных по инфляции в США',
+                    summary: 'Индекс потребительских цен в США оказался ниже прогнозов, что ослабило доллар.'
+                }
+            ];
+            
+            newsGrid.innerHTML = news.map(item => `
+                <div class="news-item">
+                    <div class="news-date">${item.date}</div>
+                    <div class="news-title">${item.title}</div>
+                    <div class="news-summary">${item.summary}</div>
+                </div>
+            `).join('');
+        }
+
+        // Обновление отображения
+        function updateDisplay() {
+            convertCurrency();
+            if (document.getElementById('chartsSection').style.display !== 'none') {
+                updateChart();
+            }
+        }
+
+        // Обновление основных курсов
+        function updateMainRates() {
+            const usdRate = currencyData.rates.USD || 92.45;
+            const eurRate = currencyData.rates.EUR || 99.12;
+            const cnyRate = currencyData.rates.CNY || 12.78;
+            
+            document.getElementById('usdRate').textContent = usdRate.toFixed(2);
+            document.getElementById('eurRate').textContent = eurRate.toFixed(2);
+            document.getElementById('cnyRate').textContent = cnyRate.toFixed(2);
+            
+            // Рандомные изменения для демо
+            document.getElementById('usdChange').textContent = 
+                `${(Math.random() * 2 - 1).toFixed(2)}%`;
+            document.getElementById('eurChange').textContent = 
+                `${(Math.random() * 2 - 1).toFixed(2)}%`;
+            document.getElementById('cnyChange').textContent = 
+                `${(Math.random() * 2 - 1).toFixed(2)}%`;
+        }
+
+        // Обновление таблицы валют
+        function updateCurrencyTable() {
+            const tbody = document.getElementById('currencyTableBody');
+            const currencies = [
+                { code: 'USD', name: 'Доллар США', flag: '🇺🇸' },
+                { code: 'EUR', name: 'Евро', flag: '🇪🇺' },
+                { code: 'CNY', name: 'Китайский юань', flag: '🇨🇳' },
+                { code: 'GBP', name: 'Фунт стерлингов', flag: '🇬🇧' },
+                { code: 'JPY', name: 'Японская иена', flag: '🇯🇵' },
+                { code: 'CHF', name: 'Швейцарский франк', flag: '🇨🇭' },
+                { code: 'CAD', name: 'Канадский доллар', flag: '🇨🇦' },
+                { code: 'AUD', name: 'Австралийский доллар', flag: '🇦🇺' },
+                { code: 'NZD', name: 'Новозеландский доллар', flag: '🇳🇿' },
+                { code: 'SGD', name: 'Сингапурский доллар', flag: '🇸🇬' },
+                { code: 'HKD', name: 'Гонконгский доллар', flag: '🇭🇰' },
+                { code: 'SEK', name: 'Шведская крона', flag: '🇸🇪' },
+                { code: 'NOK', name: 'Норвежская крона', flag: '🇳🇴' },
+                { code: 'DKK', name: 'Датская крона', flag: '🇩🇰' },
+                { code: 'PLN', name: 'Польский злотый', flag: '🇵🇱' },
+                { code: 'CZK', name: 'Чешская крона', flag: '🇨🇿' },
+                { code: 'HUF', name: 'Венгерский форинт', flag: '🇭🇺' },
+                { code: 'TRY', name: 'Турецкая лира', flag: '🇹🇷' }
+            ];
+            
+            tbody.innerHTML = currencies.map(curr => {
+                const rate = currencyData.rates[curr.code] || (90 + Math.random() * 50);
+                const change = (Math.random() * 4 - 2).toFixed(2);
+                const min = (rate * (1 - Math.random() * 0.05)).toFixed(2);
+                const max = (rate * (1 + Math.random() * 0.05)).toFixed(2);
+                
+                return `
+                    <tr>
+                        <td>
+                            <span class="currency-flag">${curr.flag}</span>
+                            ${curr.name}
+                        </td>
+                        <td><strong>${curr.code}</strong></td>
+                        <td><strong>${rate.toFixed(2)} ₽</strong></td>
+                        <td style="color: ${change >= 0 ? '#28a745' : '#dc3545'}">
+                            ${change >= 0 ? '↑' : '↓'} ${Math.abs(change)}%
+                        </td>
+                        <td>${min} ₽</td>
+                        <td>${max} ₽</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Фильтрация валют
+        function filterCurrencies() {
+            const search = document.getElementById('currencySearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#currencyTable tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        }
+
+        // Инициализация графика
+        function initChart() {
+            const ctx = document.getElementById('currencyChart').getContext('2d');
+            
+            if (chart) {
+                chart.destroy();
+            }
+            
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Курс к RUB',
+                        data: [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + ' ₽';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            updateChart();
+        }
+
+        // Обновление графика
+        function updateChart() {
+            if (!chart) return;
+            
+            const currency = document.getElementById('chartCurrency').value;
+            const days = parseInt(document.getElementById('chartPeriod').value);
+            
+            const history = currencyData.history[currency] || [];
+            const recentHistory = history.slice(-days);
+            
+            chart.data.labels = recentHistory.map(d => d.date);
+            chart.data.datasets[0].data = recentHistory.map(d => d.rate);
+            chart.data.datasets[0].label = `${currency} к RUB`;
+            
+            chart.update();
+        }
+
+        // Конвертация валют
+        function convertCurrency() {
+            const amount = parseFloat(document.getElementById('amount').value) || 0;
+            const from = document.getElementById('fromCurrency').value;
+            const to = document.getElementById('toCurrency').value;
+            
+            let result;
+            let rate;
+            
+            if (to === 'RUB') {
+                rate = currencyData.rates[from] || 90;
+                result = amount * rate;
+            } else if (from === 'RUB') {
+                rate = 1 / (currencyData.rates[to] || 90);
+                result = amount * rate;
+            } else {
+                const rateFrom = currencyData.rates[from] || 90;
+                const rateTo = currencyData.rates[to] || 90;
+                rate = rateFrom / rateTo;
+                result = amount * rate;
+            }
+            
+            document.getElementById('resultAmount').textContent = 
+                result.toFixed(2) + ' ' + to;
+            
+            document.getElementById('conversionRate').textContent = 
+                `1 ${from} = ${rate.toFixed(4)} ${to}`;
+        }
+
+        // Показать уведомление
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
